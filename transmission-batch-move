@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# Simple shell script to rename all Transmission destination paths at
+# once (by editing resume files)
+
+# Copyright (c) 2011  Vyacheslav Levit
+# Licensed under The MIT License (see LICENSE file)
+
+CONFIG="${HOME}/.config/transmission"
+RESUME="${CONFIG}/resume"
+ORIG="${CONFIG}/resume.orig"
+
+if test $# != 2; then
+    echo "Usage: $0 PATTERN REPLACEMENT"
+    exit 1
+fi
+
+# escape comma in PATTERN and REPLACEMENT for use in sed
+PATTERN=$(sed -e "s=,=\\\\,=g" <<< "$1")
+REPLACEMENT=$(sed -e "s=,=\\\\,=g" <<< "$2")
+
+if test ! -d "${RESUME}"; then
+    echo "error: $RESUME doesn't exist or is not a directory"
+    exit 1
+fi
+
+if test -d "$ORIG"; then
+    echo "error: $ORIG already exists"
+    exit 1
+fi
+
+echo "copying $RESUME to $ORIG"
+cp -R "$RESUME" "$ORIG"
+test $? == 0 || exit 1
+echo "copying finished"
+
+echo "processing directory \"${ORIG}\"..."
+
+find "$RESUME" -type f -name "*.resume" | while read file
+do
+    echo "processing $(basename "$file")"
+
+    # calculate position of destination property
+    dest=$(grep -aob "11:destination[0-9]\+" "$file")
+    old_len=$(grep -o "[0-9]\+$" <<< "$dest")
+    pos=$(grep -o "^[0-9]\+" <<< "$dest")
+    end=$(($pos+14+${#old_len}+1+$old_len))
+
+    # fetch the destination path, make the substitution
+    old_path="$(head -c $end "$file"| tail -c $old_len)"
+    new_path="$(sed -e "s,${PATTERN},${REPLACEMENT}," <<< "$old_path")"
+
+    if test "$old_path" = "$new_path"; then
+        echo "no need to update the file"
+        continue
+    fi
+
+    # new path length in bytes, not characters
+    new_len=$(expr length "$new_path")
+    new_dest="11:destination${new_len}:${new_path}"
+
+    # write temporary file and replace the original one
+    tmpfile="${file}.tmp.$$"
+    head -c $pos "$file" > "$tmpfile"
+    echo -n "$new_dest" >> "$tmpfile"
+    tail -c +$((${end}+1)) "$file" >> "$tmpfile"
+    mv "$tmpfile" "$file"
+
+    echo "file processed"
+done
