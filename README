@@ -7,7 +7,7 @@ editing the resume files)
 Usage
 =====
 
-transmission-batch-move PATTERN REPLACEMENT
+transmission-batch-move [OPTIONS] PATTERN REPLACEMENT
 
 It will search PATTERN (regex) and replace it with REPLACEMENT in all
 destination properties of Transmission resume files in
@@ -15,6 +15,22 @@ destination properties of Transmission resume files in
 destination path, so resume file will not break. All original resume files are
 moved to ~/.config/transmission/resume.orig. But for sure, backup the directory
 yourself!
+
+Options
+=======
+
+-d, --daemon
+Use this option if you wish to change resume files for transmission-daemon.
+
+-h, --help
+Displays some useful info and available options.
+
+-y, --yes
+Ignores the prompt to continue.
+
+--path=CONFIG 
+Specify path to your transmission config directory, which contains resume/
+directory.
 
 License
 =======
