@@ -6,14 +6,66 @@
 # Copyright (c) 2011  Vyacheslav Levit
 # Licensed under The MIT License (see LICENSE file)
 
+# transmission-daemon stores information about torrents and resume files in
+# /var/lib/transmission-daemon/info
+# Source: http://askubuntu.com/questions/82531/where-is-the-transmission-daemon-torrent-list-stored
+
 CONFIG="${HOME}/.config/transmission"
+
+HELP="Usage: $0 [OPTIONS] PATTERN REPLACEMENT\n\
+Bulk change torrent location. Does NOT move actual downloaded files, \
+just changes their location in *.resume files.\n\n\
+Options:\n\
+ -d, --daemon\tSame as --path=/var/lib/transmission-daemon/info\n\
+ -h, --help\tDisplays this help.\n\
+ -y, --yes\tIgnore safety prompt.\n\
+ --path=CONFIG \tSpecify folder where resume/ is located."
+
+# parse switches
+for i in "$@"
+do
+case $i in
+    -d|--daemon)
+    CONFIG="/var/lib/transmission-daemon/info"
+    shift
+    ;;
+    -h|--help)
+    echo -e $HELP
+    exit 0
+    ;;
+    --path=*)
+    CONFIG="${i#*=}"
+    shift
+    ;;
+    -y|--yes)
+    REPLY=y
+    shift
+    ;;
+    *)
+    # ignore anything else
+    ;;
+esac
+done
+
+if [ ! "$1" -a "$2" ]; then
+    echo -e $HELP
+    exit 1
+else
+    echo "CONFIG=$CONFIG"
+    echo "PATTERN=$1"
+    echo "REPLACEMENT=$2"
+fi
+
+if [[ ! $REPLY ]]; then
+    read -p "Continue? y/N " -n 1 -r
+    echo    # move to a new line
+fi
+
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+
 RESUME="${CONFIG}/resume"
 ORIG="${CONFIG}/resume.orig"
-
-if test $# != 2; then
-    echo "Usage: $0 PATTERN REPLACEMENT"
-    exit 1
-fi
 
 # escape comma in PATTERN and REPLACEMENT for use in sed
 PATTERN=$(sed -e "s=,=\\\\,=g" <<< "$1")
@@ -34,7 +86,7 @@ cp -R "$RESUME" "$ORIG"
 test $? == 0 || exit 1
 echo "copying finished"
 
-echo "processing directory \"${ORIG}\"..."
+echo "processing directory \"${RESUME}\"..."
 
 find "$RESUME" -type f -name "*.resume" | while read file
 do
@@ -68,3 +120,5 @@ do
 
     echo "file processed"
 done
+
+fi
