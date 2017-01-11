@@ -7,17 +7,51 @@
 # Licensed under The MIT License (see LICENSE file)
 
 CONFIG="${HOME}/.config/transmission"
+
+help() {
+    cat <<EOF
+Usage: ${0##*/} [OPTIONS] PATTERN REPLACEMENT
+
+Bulk change torrent location. Do NOT move actual downloaded files,
+just change their location in *.resume files.
+
+Options:
+ -h, --help    Displays this help.
+ -y, --yes     Ignore safety prompt.
+ --path=PATH   Specify configuration folder where resume directory
+               is located. Default is "$CONFIG"
+EOF
+}
+
+# parse switches
+for i in "$@"
+do
+case $i in
+    -h|--help)
+    help
+    exit 0
+    ;;
+    --path=*)
+    CONFIG="${i#*=}"
+    shift
+    ;;
+    -y|--yes)
+    REPLY=y
+    shift
+    ;;
+    *)
+    # ignore positional arguments
+    ;;
+esac
+done
+
 RESUME="${CONFIG}/resume"
-ORIG="${CONFIG}/resume.orig"
+ORIG="${CONFIG}/resume-$(date +%Y%m%d-%H%M%S)"
 
-if test $# != 2; then
-    echo "Usage: $0 PATTERN REPLACEMENT"
-    exit 1
+if (( $# != 2 )); then
+    help
+    exit 2
 fi
-
-# escape comma in PATTERN and REPLACEMENT for use in sed
-PATTERN=$(sed -e "s=,=\\\\,=g" <<< "$1")
-REPLACEMENT=$(sed -e "s=,=\\\\,=g" <<< "$2")
 
 if test ! -d "${RESUME}"; then
     echo "error: $RESUME doesn't exist or is not a directory"
@@ -29,12 +63,32 @@ if test -d "$ORIG"; then
     exit 1
 fi
 
+echo "Transimission configuration folder: $CONFIG"
+echo "Resume files folder: $RESUME"
+echo "Backup folder: $ORIG"
+echo "PATTERN: $1"
+echo "REPLACEMENT: $2"
+
+while [[ ! "$REPLY" =~ [yY]$ ]] && [[ ! "$REPLY" =~ [nN]$ ]]
+do
+    read -p "Continue? y/N " -n 1 -r REPLY
+    echo    # move to a new line
+done
+
+[[ "$REPLY" =~ [nN]$ ]] && exit 0;
+
+
+# escape comma in PATTERN and REPLACEMENT for use in sed
+PATTERN=$(sed -e "s=,=\\\\,=g" <<< "$1")
+REPLACEMENT=$(sed -e "s=,=\\\\,=g" <<< "$2")
+
+
 echo "copying $RESUME to $ORIG"
 cp -R "$RESUME" "$ORIG"
 test $? == 0 || exit 1
 echo "copying finished"
 
-echo "processing directory \"${ORIG}\"..."
+echo "processing directory \"${RESUME}\"..."
 
 find "$RESUME" -type f -name "*.resume" | while read file
 do
@@ -51,7 +105,7 @@ do
     new_path="$(sed -e "s,${PATTERN},${REPLACEMENT}," <<< "$old_path")"
 
     if test "$old_path" = "$new_path"; then
-        echo "no need to update the file"
+        echo "no changes needed"
         continue
     fi
 
