@@ -29,6 +29,6 @@ Transmission daemon on Debian / Ubuntu
 
 For Debin and derivative distributions Transmission daemon
 configuration directory is set to `/var/lib/transmission-daemon/info`
-by default. So pass `--path=transmission-batch-move` as follows:
+by default. So pass `--path` as follows:
 
     transmission-batch-move --path=/var/lib/transmission-daemon/info PATTERN REPLACEMENT
