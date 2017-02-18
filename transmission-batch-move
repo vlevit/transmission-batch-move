@@ -3,7 +3,7 @@
 # Simple shell script to rename all Transmission destination paths at
 # once (by editing resume files)
 
-# Copyright (c) 2011  Vyacheslav Levit
+# Copyright (c) 2011, 2017 transmission-batch-move authors (see AUTHORS file)
 # Licensed under The MIT License (see LICENSE file)
 
 CONFIG="${HOME}/.config/transmission"
