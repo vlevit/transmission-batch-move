@@ -12,7 +12,7 @@ help() {
     cat <<EOF
 Usage: ${0##*/} [OPTIONS] PATTERN REPLACEMENT
 
-Bulk change torrent location. Do NOT move actual downloaded files,
+Change all torrents location. Do NOT move actual downloaded files,
 just change their location in *.resume files.
 
 Options:

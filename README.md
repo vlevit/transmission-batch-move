@@ -27,7 +27,7 @@ Options
 Transmission daemon on Debian / Ubuntu
 ======================================
 
-For Debin and derivative distributions Transmission daemon
+For Debian and derivative distributions Transmission daemon
 configuration directory is set to `/var/lib/transmission-daemon/info`
 by default. So pass `--path` as follows:
 
