@@ -94,7 +94,7 @@ find "$RESUME" -type f -name "*.resume" | while read file
 do
     echo "processing $(basename "$file")"
 
-    # calculate position of destination property
+    # calculate destination position
     dest=$(grep -aob "11:destination[0-9]\+" "$file")
     old_len=$(grep -o "[0-9]\+$" <<< "$dest")
     pos=$(grep -o "^[0-9]\+" <<< "$dest")
@@ -110,7 +110,7 @@ do
     fi
 
     # new path length in bytes, not characters
-    new_len=$(expr length "$new_path")
+    new_len=$(wc -c <<< "$new_path")
     new_dest="11:destination${new_len}:${new_path}"
 
     # write temporary file and replace the original one
