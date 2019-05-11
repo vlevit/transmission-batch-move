@@ -110,7 +110,7 @@ do
     fi
 
     # new path length in bytes, not characters
-    new_len=$(wc -c <<< "$new_path")
+    new_len=$(echo -n "$new_path" | wc -c)
     new_dest="11:destination${new_len}:${new_path}"
 
     # write temporary file and replace the original one
