@@ -15,11 +15,16 @@ Usage: ${0##*/} [OPTIONS] PATTERN REPLACEMENT
 Change all torrents location. Do NOT move actual downloaded files,
 just change their location in *.resume files.
 
+It is mandatory to specify which location must be changed - either
+'destination' or 'incomplete-dir'.
+
 Options:
- -h, --help    Displays this help.
- -y, --yes     Ignore safety prompt.
- --path=PATH   Specify configuration folder where resume directory
-               is located. Default is "$CONFIG"
+ -h, --help           Displays this help.
+ -y, --yes            Ignore safety prompt.
+ -d, --destination    Change destination location.
+ -i, --incomplete-dir Change incomplete directory location.
+ --path=PATH          Specify configuration folder where resume directory
+                      is located. Default is "$CONFIG"
 EOF
 }
 
@@ -39,6 +44,16 @@ case $i in
     REPLY=y
     shift
     ;;
+    -d|--download-dir)
+    OFFSET=14
+    TOKEN="11:destination"
+    shift
+    ;;
+    -i|--incomplete-dir)
+    OFFSET=17
+    TOKEN="14:incomplete-dir"
+    shift
+    ;;
     *)
     # ignore positional arguments
     ;;
@@ -49,6 +64,11 @@ RESUME="${CONFIG}/resume"
 ORIG="${CONFIG}/resume-$(date +%Y%m%d-%H%M%S)"
 
 if (( $# != 2 )); then
+    help
+    exit 2
+fi
+
+if [ -z $OFFSET ]; then
     help
     exit 2
 fi
@@ -66,6 +86,7 @@ fi
 echo "Transimission configuration folder: $CONFIG"
 echo "Resume files folder: $RESUME"
 echo "Backup folder: $ORIG"
+echo "Changing: $TOKEN"
 echo "PATTERN: $1"
 echo "REPLACEMENT: $2"
 
@@ -95,10 +116,10 @@ do
     echo "processing $(basename "$file")"
 
     # calculate destination position
-    dest=$(grep -aob "11:destination[0-9]\+" "$file")
+    dest=$(grep -aob "$TOKEN[0-9]\+" "$file")
     old_len=$(grep -o "[0-9]\+$" <<< "$dest")
     pos=$(grep -o "^[0-9]\+" <<< "$dest")
-    end=$(($pos+14+${#old_len}+1+$old_len))
+    end=$(($pos+$OFFSET+${#old_len}+1+$old_len))
 
     # fetch the destination path, make the substitution
     old_path="$(head -c $end "$file"| tail -c $old_len)"
@@ -111,7 +132,7 @@ do
 
     # new path length in bytes, not characters
     new_len=$(echo -n "$new_path" | wc -c)
-    new_dest="11:destination${new_len}:${new_path}"
+    new_dest="$TOKEN${new_len}:${new_path}"
 
     # write temporary file and replace the original one
     tmpfile="${file}.tmp.$$"
