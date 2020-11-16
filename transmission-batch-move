@@ -18,6 +18,7 @@ just change their location in *.resume files.
 Options:
  -h, --help    Displays this help.
  -y, --yes     Ignore safety prompt.
+ -t, --time    Preserve file modify time.
  --path=PATH   Specify configuration folder where resume directory
                is located. Default is "$CONFIG"
 EOF
@@ -37,6 +38,10 @@ case $i in
     ;;
     -y|--yes)
     REPLY=y
+    shift
+    ;;
+    -t|--time)
+    MTIME=y
     shift
     ;;
     *)
@@ -118,7 +123,10 @@ do
     head -c $pos "$file" > "$tmpfile"
     echo -n "$new_dest" >> "$tmpfile"
     tail -c +$((${end}+1)) "$file" >> "$tmpfile"
+    # touch temporary file with mtime of original file
+    [ $MTIME ] && touch -d "$(stat -c %y "$file")" "$tmpfile"
     mv "$tmpfile" "$file"
 
     echo "file processed"
 done
+
