@@ -106,7 +106,7 @@ do
     end=$(($pos+14+${#old_len}+1+$old_len))
 
     # fetch the destination path, make the substitution
-    old_path="$(head -c $end "$file"| tail -c $old_len)"
+    old_path="$(head -c $end "$file"| tail -c -$old_len)"
     new_path="$(sed -e "s,${PATTERN},${REPLACEMENT}," <<< "$old_path")"
 
     if test "$old_path" = "$new_path"; then
